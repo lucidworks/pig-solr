@@ -1,0 +1,51 @@
+
+shadowJar {
+  zip64 true
+  mergeServiceFiles()
+  baseName = "${project.name}-${bigDataVersion}"
+  classifier = ''
+  dependencies {
+    include(dependency("org.apache.solr:solr-solrj:${solrVersion}"))
+    include(dependency("org.apache.solr:solr-commons-csv:3.5.0"))
+    exclude(dependency("org.apache.hadoop:.*"))
+    exclude(dependency("org.apache.zookeper:.*"))
+    include(dependency("org.apache.mahout:mahout-core:${mahoutVersion}"))
+    include(dependency("org.apache.mahout:mahout-math:${mahoutVersion}"))
+    include(dependency("org.apache.mahout:mahout-integration:${mahoutVersion}"))
+    include(dependency("org.apache.mahout.commons:commons-cli:2.0-mahout"))
+    include(dependency('org.apache.httpcomponents:httpclient:.*'))
+    include(dependency('org.apache.httpcomponents:httpcore:.*'))
+    include(dependency('org.apache.httpcomponents:httpmime:.*'))
+    include(dependency('org.noggit:noggit:.*'))
+
+  }
+
+  relocate 'org.apache.http', 'shaded.org.apache.http'
+  relocate 'org.apache.solr', 'shaded.org.apache.solr'
+}
+
+dependencies {
+  compile("com.lucidworks.hadoop:solr-core-io:${bigDataVersion}") {
+    transitive = false
+  }
+
+  compile("org.apache.pig:pig:${pigVersion}") {
+    exclude group: "org.mortbay.jetty"
+    exclude group: "org.apache.hbase"
+    exclude group: "commons-codec"
+    transitive = false
+  }
+
+  runtime("org.antlr:antlr:3.4")
+  runtime("org.antlr:antlr-runtime:3.4")
+  runtime("org.antlr:ST4:4.0.4")
+  runtime("jline:jline:0.9.94")
+}
+
+test {
+
+  sourceSets.test.compileClasspath = configurations.solrtest + sourceSets.test.compileClasspath
+  sourceSets.test.runtimeClasspath = configurations.solrtest + sourceSets.test.runtimeClasspath
+
+  systemProperty 'test.resources.dir', "src/test/resources"
+}

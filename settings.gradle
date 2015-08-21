@@ -1,0 +1,4 @@
+rootProject.name = 'pig-solr'
+
+include 'core-pig'
+include 'pig-solr'
