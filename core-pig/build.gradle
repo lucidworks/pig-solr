@@ -36,6 +36,8 @@ dependencies {
   runtime("org.antlr:antlr-runtime:3.4")
   runtime("org.antlr:ST4:4.0.4")
   runtime("jline:jline:0.9.94")
+
+  testCompile("com.lucidworks.hadoop:solr-hadoop-testbase:${bigDataVersion}")
 }
 
 test {
