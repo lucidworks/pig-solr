@@ -1,8 +1,7 @@
-
 shadowJar {
   zip64 true
   mergeServiceFiles()
-  baseName = "${project.name}-${bigDataVersion}"
+  baseName = "${pigJarName}-${bigDataVersion}"
   classifier = ''
   dependencies {
     exclude(dependency("org.apache.hadoop:.*"))
@@ -33,13 +32,5 @@ dependencies {
 
   compile("com.lucidworks.hadoop:solr-document-service:${bigDataVersion}") {
     transitive = false
-  }
-}
-
-jacocoTestReport {
-  reports {
-    xml.enabled false
-    csv.enabled false
-    html.destination "${buildDir}/jacocoHtml"
   }
 }
