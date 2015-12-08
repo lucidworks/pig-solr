@@ -1,0 +1,111 @@
+= Lucidworks Pig Functions for Solr
+
+== Features
+
+* Use Pig scripts to parse content before indexing to Solr.
+* Fully SolrCloud compliant.
+* Supports Kerberos for authentication.
+
+Supported versions are:
+
+* Solr 5.x
+* Pig versions 0.12, 0.13, 0.14, and 0.15
+* Hadoop 2.x
+
+== Build the Functions Jar
+
+Configure solr-hadoop-common submodule.
+
+Run the following commands: git submodule init to initialize your local configuration file. git submodule update to fetch all the data from that project and check out the appropriate commit listed in the superproject.
+
+The build uses Gradle. To build the .jar files, run this command:
+
+`./gradlew clean shadowJar --info`
+
+This will make a .jar file:
+
+[listing]
+solr-pig-functions/build/libs/solr-pig-functions-{version}.jar
+
+The .jar is required to use Pig functions to index content to Solr.
+
+== Use the Functions
+
+// tag::functions[]
+=== Available Functions
+
+The Pig functions included in the `solr-pig-functions-.jar` are three UserDefined Functions (UDF) and one Store function. These functions are:
+
+* `com/lucidworks/hadoop/pig/SolrStoreFunc.class`
+* `com/lucidworks/hadoop/pig/EpochToCalendar.class`
+* `com/lucidworks/hadoop/pig/Extract.class`
+* `com/lucidworks/hadoop/pig/Histogram.class`
+// end::functions[]
+
+// tag::use[]
+== Using the Functions
+
+There are two approaches to using functions in Pig: to `REGISTER` them in the script, or to load them with your Pig command line request.
+
+If using `REGISTER`, the Pig function jars must be put in HDFS in order to be used by your Pig script. It can be located anywhere in HDFS; you can either supply the path in your script or use a variable and define the variable with `-p` property definition.
+
+The example below uses the second approach, loading the .jars with `-Dpig.additional.jars` system property when launching the script. With this approach, the .jars can be located anywhere on the machine where the script will be run.
+
+When using the Pig functions, you can pass parameters for your script on the command line. The properties you will need to pass are the location of Solr and the collection to use; these are shown in detail in the example below.
+
+//end::use[]
+
+// tag::example[]
+=== Sample CSV Script
+
+The following Pig script will take a simple CSV file and index it to Solr.
+
+[source,pig]
+----
+set solr.zkhost '$zkHost';
+set solr.collection '$collection'; -- <1>
+
+A = load '$csv' using PigStorage(',') as (id_s:chararray,city_s:chararray,country_s:chararray,code_s:chararray,code2_s:chararray,latitude_s:chararray,longitude_s:chararray,flag_s:chararray); -- <2>
+--dump A;
+B = FOREACH A GENERATE $0 as id, 'city_s', $1, 'country_s', $2, 'code_s', $3, 'code2_s', $4, 'latitude_s', $5, 'longitude_s', $6, 'flag_s', $7; -- <3>
+
+ok = store B into 'SOLR' using com.lucidworks.hadoop.pig.SolrStoreFunc(); -- <4>
+----
+This relatively simple script is doing several things that help to understand how the Solr Pig functions work.
+
+<1> This and the line above define parameters that are needed by `SolrStoreFunc` to know where Solr is. `SolrStoreFunc` needs the properties `solr.zkhost` and `solr.collection`, and these lines are mapping the `zkhost` and `collection` parameters we will pass when invoking Pig to the required properties.
+<2> Load the CSV file, the path and name we will pass with the `csv` parameter. We also define the field names for each column in CSV file, and their types.
+<3> For each item in the CSV file, generate a document id from the first field (`$0`) and then define each field name and value in `name, value` pairs.
+<4> Load the documents into Solr, using the `SolrStoreFunc`. While we don't need to define the location of Solr here, the function will use the `zkhost` and `collection` properties that we will pass when we invoke our Pig script.
+
+WARNING: When using `SolrStoreFunc`, the document ID *must* be the first field.
+
+When we want to run this script, we invoke Pig and define several parameters we have referenced in the script with the `-p` option, such as in this command:
+
+[source,bash]
+----
+./bin/pig -Dpig.additional.jars=/path/to/solr-pig-functions.jar -p csv=/path/to/my/csv/airports.dat -p zkHost=zknode1:2181,zknode2:2181,zknode3:2181/solr -p collection=myCollection ~/myScripts/index-csv.pig
+----
+
+The parameters to pass are:
+
+`csv`::
+The path and name of the CSV file we want to process.
+
+`zkhost`::
+The ZooKeeper connection string for a SolrCloud cluster, in the form of  `zkhost1:port,zkhost2:port,zkhost3:port/chroot`. In the script, we mapped this to the `solr.zkhost` property, which is required by the `SolrStoreFunc` to know where to send the output documents.
+
+`collection`::
+The Solr collection to index into. In the script, we mapped this to the `solr.collection` property, which is required by the `SolrStoreFunc` to know the Solr collection the documents should be indexed to.
+
+[TIP]
+====
+The `zkhost` parameter above is only used if you are indexing to a SolrCloud cluster, which uses ZooKeeper to route indexing and query requests.
+
+If, however, you are not using SolrCloud, you can use the `solrUrl` parameter, which takes the location of a standalone Solr instance, in the form of `http://host:port/solr`.
+
+In the script, you would change the line that maps `solr.zkhost` to the `zkhost` property to map `solr.server.url` to the `solrUrl` property. For example:
+
+`set solr.server.url '$solrUrl';`
+====
+// end::example[]

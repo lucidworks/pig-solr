@@ -1,0 +1,6 @@
+include 'solr-pig-core'
+include 'solr-pig-functions'
+
+include 'solr-hadoop-common:solr-hadoop-io'
+include 'solr-hadoop-common:solr-hadoop-testbase'
+include 'solr-hadoop-common:solr-hadoop-document'
