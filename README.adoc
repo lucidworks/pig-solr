@@ -42,7 +42,7 @@ The Pig functions included in the `solr-pig-functions-.jar` are three UserDefine
 * `com/lucidworks/hadoop/pig/Histogram.class`
 // end::functions[]
 
-// tag::use[]
+// tag::use-pig[]
 == Using the Functions
 
 There are two approaches to using functions in Pig: to `REGISTER` them in the script, or to load them with your Pig command line request.
@@ -53,9 +53,50 @@ The example below uses the second approach, loading the .jars with `-Dpig.additi
 
 When using the Pig functions, you can pass parameters for your script on the command line. The properties you will need to pass are the location of Solr and the collection to use; these are shown in detail in the example below.
 
-//end::use[]
+//end::use-pig[]
 
-// tag::example[]
+// tag::kerberos-pig[]
+
+=== Indexing to a Kerberos-Secured Solr Cluster
+
+When a Solr cluster is secured with Kerberos for internode communication, Pig scripts must include the full path to a JAAS file that includes the service principal and the path to a keytab file that will be used to index the output of the script to Solr.
+
+Two parameters provide the information the script needs to access the JAAS file:
+
+`lww.jaas.file`::
+The path to the JAAS file that includes a section for the service principal who will write to the Solr indexes. For example, to use this property in a Pig script:
++
+[source]
+set lww.jaas.file '/opt/${namePackage}/conf/login.conf';
++
+The JAAS configuration file *must* be copied to the same path on every node where a Node Manager is running (i.e., every node where map/reduce tasks are executed).
+
+`lww.jaas.appname`::
+The name of the section in the JAAS file that includes the correct service principal and keytab path. For example, to use this property in a Pig script:
++
+[source]
+set lww.jaas.appname 'Client';
+
+Here is a sample section of a JAAS file:
+
+[source]
+Client { --<1>
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  keyTab="/data/solr-indexer.keytab" --<2>
+  storeKey=true
+  useTicketCache=true
+  debug=true
+  principal="solr-indexer@SOLRSERVER.COM"; --<3>
+};
+
+<1> The name of this section of the JAAS file. This name will be used with the `lww.jaas.appname` parameter.
+<2> The location of the keytab file.
+<3> The service principal name. This should be a different principal than the one used for Solr, but must have access to both Solr and Pig.
+
+//end::kerberos-pig[]
+
+// tag::example-pig[]
 === Sample CSV Script
 
 The following Pig script will take a simple CSV file and index it to Solr.
