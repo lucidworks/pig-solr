@@ -96,6 +96,26 @@ Client { --<1>
 
 //end::kerberos-pig[]
 
+// tag::ssl-pig[]
+
+=== Indexing to a SSL-Enabled Solr Cluster
+
+When SSL is enabled in a Solr cluster, Pigs scripts must include the full paths to the `keystore` and `truststore` with their respective passwords.
+
+[source]
+set lww.keystore '/path/to/solr-ssl.keystore.jks'
+set lww.keystore.password 'secret'
+set lww.truststore '/path/to/solr-ssl.truststore.jks'
+set lww.truststore.password 'secret'
+
+[TIP]
+====
+The path (and secret configurations) should be the same in all YARN/MapReduce hosts.
+====
+
+//end::ssl-pig[]
+
+
 // tag::example-pig[]
 === Sample CSV Script
 
