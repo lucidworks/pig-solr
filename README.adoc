@@ -1,3 +1,5 @@
+:jarfilename: solr-pig-functions-<version>.jar
+
 = Lucidworks Pig Functions for Solr
 
 == Features
@@ -12,6 +14,7 @@ Supported versions are:
 * Pig versions 0.12, 0.13, 0.14, and 0.15
 * Hadoop 2.x
 
+// tag::pig-build[]
 == Build the Functions Jar
 
 Configure solr-hadoop-common submodule.
@@ -24,8 +27,8 @@ The build uses Gradle. To build the .jar files, run this command:
 
 This will make a .jar file:
 
-[listing]
-solr-pig-functions/build/libs/solr-pig-functions-{version}.jar
+[listing, subs="attributes"]
+solr-pig-functions/build/libs/{jarfilename}
 
 The .jar is required to use Pig functions to index content to Solr.
 
@@ -34,7 +37,7 @@ The .jar is required to use Pig functions to index content to Solr.
 // tag::functions[]
 === Available Functions
 
-The Pig functions included in the `solr-pig-functions-.jar` are three UserDefined Functions (UDF) and one Store function. These functions are:
+The Pig functions included in the `{jarfilename}` are three UserDefined Functions (UDF) and one Store function. These functions are:
 
 * `com/lucidworks/hadoop/pig/SolrStoreFunc.class`
 * `com/lucidworks/hadoop/pig/EpochToCalendar.class`
@@ -143,9 +146,9 @@ WARNING: When using `SolrStoreFunc`, the document ID *must* be the first field.
 
 When we want to run this script, we invoke Pig and define several parameters we have referenced in the script with the `-p` option, such as in this command:
 
-[source,bash]
+[source,bash,subs="attributes"]
 ----
-./bin/pig -Dpig.additional.jars=/path/to/solr-pig-functions.jar -p csv=/path/to/my/csv/airports.dat -p zkHost=zknode1:2181,zknode2:2181,zknode3:2181/solr -p collection=myCollection ~/myScripts/index-csv.pig
+./bin/pig -Dpig.additional.jars=/path/to/{jarfilename} -p csv=/path/to/my/csv/airports.dat -p zkHost=zknode1:2181,zknode2:2181,zknode3:2181/solr -p collection=myCollection ~/myScripts/index-csv.pig
 ----
 
 The parameters to pass are:
