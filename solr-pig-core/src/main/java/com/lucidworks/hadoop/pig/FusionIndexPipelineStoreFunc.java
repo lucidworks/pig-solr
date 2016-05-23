@@ -1,6 +1,6 @@
 package com.lucidworks.hadoop.pig;
 
-import com.lucidworks.hadoop.clients.FusionPipelineClient;
+import com.lucidworks.hadoop.fusion.FusionPipelineClient;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.Counter;
