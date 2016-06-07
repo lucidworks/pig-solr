@@ -71,7 +71,7 @@ Two parameters provide the information the script needs to access the JAAS file:
 The path to the JAAS file that includes a section for the service principal who will write to the Solr indexes. For example, to use this property in a Pig script:
 +
 [source]
-set lww.jaas.file '/opt/${namePackage}/conf/login.conf';
+set lww.jaas.file '/path/to/login.conf';
 +
 The JAAS configuration file *must* be copied to the same path on every node where a Node Manager is running (i.e., every node where map/reduce tasks are executed).
 
