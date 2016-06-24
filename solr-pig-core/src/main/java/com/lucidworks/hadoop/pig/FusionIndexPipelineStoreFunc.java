@@ -17,7 +17,6 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.util.UDFContext;
 import org.apache.pig.tools.pigstats.PigStatusReporter;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +35,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import static com.lucidworks.hadoop.fusion.Constants.FUSION_AUTHENABLED;
+import static com.lucidworks.hadoop.fusion.Constants.FUSION_INDEX_ENDPOINT;
+import static com.lucidworks.hadoop.fusion.Constants.FUSION_LOGIN_APP_NAME;
+import static com.lucidworks.hadoop.fusion.Constants.FUSION_LOGIN_CONFIG;
+import static com.lucidworks.hadoop.fusion.Constants.FUSION_PASS;
+import static com.lucidworks.hadoop.fusion.Constants.FUSION_REALM;
+import static com.lucidworks.hadoop.fusion.Constants.FUSION_USER;
 
 /**
  * Simple Pig StoreFunc for indexing documents to a cluster of indexing pipeline endpoints.
@@ -58,6 +65,7 @@ public class FusionIndexPipelineStoreFunc extends StoreFunc {
   private static final SimpleDateFormat ISO_8601_DATE_FMT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.'S'Z'");
 
   private static final String FIELD_NAMES_FROM_SCHEMA_PROPS_KEY = "fieldNamesFromSchema";
+  private static final String BATCH_SIZE = "fusion.batch.size";
 
   protected String fusionUser;
   protected String fusionPass;
@@ -83,14 +91,7 @@ public class FusionIndexPipelineStoreFunc extends StoreFunc {
 
   protected boolean fusionAuthEnabled = true;
 
-  public FusionIndexPipelineStoreFunc(String endpoints, String batchSize, String fusionAuthEnabled, String
-      fusionUser, String fusionPass, String fusionRealm) throws SolrServerException, IOException {
-    this.fusionUser = fusionUser;
-    this.fusionPass = fusionPass;
-    this.fusionRealm = fusionRealm;
-    this.endpoints = endpoints;
-    this.batchSize = Integer.parseInt(batchSize);
-    this.fusionAuthEnabled = "true".equals(fusionAuthEnabled);
+  public FusionIndexPipelineStoreFunc() {
   }
 
   public void putNext(Tuple input) throws IOException {
@@ -488,7 +489,7 @@ public class FusionIndexPipelineStoreFunc extends StoreFunc {
   }
 
   /**
-   * Initialize the connection to Solr
+   * Initialize the connection to Fusion
    */
   @SuppressWarnings("unchecked")
   @Override
@@ -543,7 +544,39 @@ public class FusionIndexPipelineStoreFunc extends StoreFunc {
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-    // IGNORE since we are writing records to an HTTP endpoint
+    String indexEndpoint = job.getConfiguration().get(FUSION_INDEX_ENDPOINT);
+    if (indexEndpoint != null) {
+      this.endpoints = indexEndpoint;
+    }
+
+    String realm = job.getConfiguration().get(FUSION_REALM);
+    if (realm != null) {
+      this.fusionRealm = realm;
+    }
+
+    String pass = job.getConfiguration().get(FUSION_PASS);
+    if (pass != null) {
+      this.fusionPass = pass;
+    }
+
+    String user = job.getConfiguration().get(FUSION_USER);
+    if (user != null) {
+      this.fusionUser = user;
+    }
+
+    this.fusionAuthEnabled = "true".equals(job.getConfiguration().get(FUSION_AUTHENABLED, "true"));
+    this.batchSize = Integer.parseInt(job.getConfiguration().get(BATCH_SIZE, "500"));
+
+    // set kerberos needed properties.
+    String fusionLoginConfig = job.getConfiguration().get(FUSION_LOGIN_CONFIG);
+    if (fusionLoginConfig != null) {
+      System.setProperty(FUSION_LOGIN_CONFIG, fusionLoginConfig);
+    }
+
+    String fusionLoginAppName = job.getConfiguration().get(FUSION_LOGIN_APP_NAME);
+    if (fusionLoginAppName != null) {
+      System.setProperty(FUSION_LOGIN_APP_NAME, fusionLoginAppName);
+    }
   }
 
   // utility method for incrementing a Hadoop counter
@@ -553,8 +586,8 @@ public class FusionIndexPipelineStoreFunc extends StoreFunc {
       if (counter != null) {
         try {
           counter.increment(howMany);
-        } catch (java.lang.IncompatibleClassChangeError wtf) {
-          System.err.println("ERROR: " + wtf);
+        } catch (java.lang.IncompatibleClassChangeError e) {
+          log.error("Error in incremental counter", e);
         }
       }
     }
