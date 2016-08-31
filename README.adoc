@@ -33,6 +33,23 @@ solr-pig-functions/build/libs/{packageUser}-pig-functions-{connectorVersion}.jar
 
 The .jar is required to use Pig functions to index content to Solr.
 
+=== Troubleshooting
+
+If GitHub + SSH is not configured the following exception will be thrown:
+
+[source]
+----
+    Cloning into 'solr-hadoop-common'...
+    Permission denied (publickey).
+    fatal: Could not read from remote repository.
+
+    Please make sure you have the correct access rights
+    and the repository exists.
+    fatal: clone of 'git@github.com:LucidWorks/solr-hadoop-common.git' into submodule path 'solr-hadoop-common' failed
+----
+
+Use the next tutorial to fix the exception: https://help.github.com/articles/generating-an-ssh-key/
+
 == Use the Functions
 
 // tag::functions[]
