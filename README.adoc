@@ -267,7 +267,7 @@ In the script, you would change the line that maps `solr.zkhost` to the `zkhost`
 // tag::contribute[]
 == How to contribute
 
-. Fork this repo i.e. <username|organization>/hadoop-solr, following the http://help.github.com/fork-a-repo/[fork a repo/] tutorial. Then, clone the forked repo on your local machine:
+. Fork this repo i.e. <username|organization>/hadoop-solr, following the http://help.github.com/fork-a-repo/[fork a repo] tutorial. Then, clone the forked repo on your local machine:
 +
 [source, git]
 $ git clone https://github.com/<username|organization>/hadoop-solr.git
