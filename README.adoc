@@ -1,28 +1,36 @@
 :packageUser: solr
-:connectorVersion: 2.2.2
+:connectorVersion: 2.2.5
 
 = Lucidworks Pig Functions for Solr
 
 == Features
 
-* Use Pig scripts to parse content before indexing to Solr.
+* Functions to allow Pig scripts to index data to Solr or Fusion.
 * Fully SolrCloud compliant.
 * Supports Kerberos for authentication.
+* As of v2.2.4, integration with  http://lucidworks.com/fusion[Lucidworks Fusion] is supported, allowing use of Fusion pipelines for further data transformation prior to indexing.
 
 Supported versions are:
 
-* Solr 5.x
+* Solr 5.x and higher
 * Pig versions 0.12, 0.13, 0.14, and 0.15
 * Hadoop 2.x
+* Fusion 2.4.x and higher
 
 // tag::pig-build[]
 == Build the Functions Jar
 
-Configure solr-hadoop-common submodule.
+This project has a dependency on the `solr-hadoop-common` submodule (contained in a separate GitHub repository, https://github.com/lucidworks/solr-hadoop-common). This submodule must be initialized before building the Functions jar.
 
-Run the following commands: git submodule init to initialize your local configuration file. git submodule update to fetch all the data from that project and check out the appropriate commit listed in the superproject.
+To initialize the submodule, pull this repo, then:
 
-The build uses Gradle. To build the .jar files, run this command:
+   git submodule init
+
+Once the submodule has been initialized, the command `git submodule update` will fetch all the data from that project and check out the appropriate commit listed in the superproject. You must initialize and update the submodule before attempting to build the Functions jar.
+
+The build uses Gradle. However, you do not need Gradle installed before attempting to build.
+
+To build the .jar file, run this command:
 
 `./gradlew clean shadowJar --info`
 
@@ -31,9 +39,9 @@ This will make a .jar file:
 [listing, subs="attributes"]
 solr-pig-functions/build/libs/{packageUser}-pig-functions-{connectorVersion}.jar
 
-The .jar is required to use Pig functions to index content to Solr.
+The .jar is required to use the Pig functions.
 
-=== Troubleshooting
+=== Troubleshooting Clone Issues
 
 If GitHub + SSH is not configured the following exception will be thrown:
 
@@ -48,16 +56,16 @@ If GitHub + SSH is not configured the following exception will be thrown:
     fatal: clone of 'git@github.com:LucidWorks/solr-hadoop-common.git' into submodule path 'solr-hadoop-common' failed
 ----
 
-Use the next tutorial to fix the exception: https://help.github.com/articles/generating-an-ssh-key/
-
-== Use the Functions
+To fix this error, use the https://help.github.com/articles/generating-an-ssh-key/[generating an SSH key] tutorial.
+// end::pig-build[]
 
 // tag::functions[]
-=== Available Functions
+== Available Functions
 
-The Pig functions included in the `{packageUser}-pig-functions-{connectorVersion}.jar` are three UserDefined Functions (UDF) and one Store function. These functions are:
+The Pig functions included in the `{packageUser}-pig-functions-{connectorVersion}.jar` are three UserDefined Functions (UDF) and two Store functions. These functions are:
 
 * `com/lucidworks/hadoop/pig/SolrStoreFunc.class`
+* `com/lucidworks/hadoop/pig/FusionIndexPipelinesStoreFunc.class`
 * `com/lucidworks/hadoop/pig/EpochToCalendar.class`
 * `com/lucidworks/hadoop/pig/Extract.class`
 * `com/lucidworks/hadoop/pig/Histogram.class`
@@ -66,19 +74,34 @@ The Pig functions included in the `{packageUser}-pig-functions-{connectorVersion
 // tag::use-pig[]
 == Using the Functions
 
-There are two approaches to using functions in Pig: to `REGISTER` them in the script, or to load them with your Pig command line request.
+// tag::pig-register[]
+=== Register the Functions
+There are two approaches to using functions in Pig: `REGISTER` them in the script, or load them with your Pig command line request.
 
 If using `REGISTER`, the Pig function jars must be put in HDFS in order to be used by your Pig script. It can be located anywhere in HDFS; you can either supply the path in your script or use a variable and define the variable with `-p` property definition.
 
-The example below uses the second approach, loading the .jars with `-Dpig.additional.jars` system property when launching the script. With this approach, the .jars can be located anywhere on the machine where the script will be run.
+The example below uses the second approach, loading the jars with the `-Dpig.additional.jars` system property when launching the script. With this approach, the jars can be located anywhere on the machine where the script will be run.
+// end::pig-register[]
 
-When using the Pig functions, you can pass parameters for your script on the command line. The properties you will need to pass are the location of Solr and the collection to use; these are shown in detail in the example below.
+// tag::pig-solr[]
+=== Indexing Data to Solr
 
-//end::use-pig[]
+There are a few required parameters for your script to output data to Solr for indexing.
 
-// tag::kerberos-pig[]
+These parameters can be defined in the script itself, or turned into variables that are defined each time the script runs. The example Pig script below shows an example of using these parameters with variables.
 
-=== Indexing to a Kerberos-Secured Solr Cluster
+`solr.zkhost`::
+The ZooKeeper connection string if using Solr in SolrCloud mode. This should be in the form of `server:port,server:port,server:port/chroot`.
+
+If you are not using SolrCloud, use the `solr.server.url` parameter instead.
+
+`solr.server.url`::
+The location of the Solr instance when Solr is running in standalone mode. This should be in the form of `\http://server:port/solr`.
+
+`solr.collection`::
+The name of the Solr collection where documents will be indexed.
+
+==== Indexing to a Kerberos-Secured Solr Cluster
 
 When a Solr cluster is secured with Kerberos for internode communication, Pig scripts must include the full path to a JAAS file that includes the service principal and the path to a keytab file that will be used to index the output of the script to Solr.
 
@@ -115,13 +138,9 @@ Client { --<1>
 <2> The location of the keytab file.
 <3> The service principal name. This should be a different principal than the one used for Solr, but must have access to both Solr and Pig.
 
-//end::kerberos-pig[]
+==== Indexing to a SSL-Enabled Solr Cluster
 
-// tag::ssl-pig[]
-
-=== Indexing to a SSL-Enabled Solr Cluster
-
-When SSL is enabled in a Solr cluster, Pigs scripts must include the full paths to the `keystore` and `truststore` with their respective passwords.
+When SSL is enabled in a Solr cluster, Pig scripts must include the full paths to the `keystore` and `truststore` with their respective passwords.
 
 [source]
 set lww.keystore '/path/to/solr-ssl.keystore.jks'
@@ -129,13 +148,66 @@ set lww.keystore.password 'secret'
 set lww.truststore '/path/to/solr-ssl.truststore.jks'
 set lww.truststore.password 'secret'
 
-[TIP]
-====
-The path (and secret configurations) should be the same in all YARN/MapReduce hosts.
-====
+TIP: The paths (and secret configurations) should be the same in all YARN/MapReduce hosts.
 
-//end::ssl-pig[]
+// end::pig-solr[]
 
+// tag::pig-fusion[]
+=== Indexing Data to Fusion
+When indexing data to Fusion, there are several parameters to pass with your script in order to output data to Fusion for indexing.
+
+These parameters can be made into variables in the script, with the proper values passed on the command line when the script is initiated. The example script below shows how to do this for Solr. The theory is the same for Fusion, only the parameter names would change as appropriate:
+
+`fusion.endpoints`::
+The full URL to the index pipeline in Fusion. The URL should include the pipeline name and the collection data will be indexed to.
+
+`fusion.realm`::
+This is used with `fusion.user` and `fusion.password` to authenticate to Fusion for indexing data. Two options are supported, `KERBEROS` or `NATIVE`.
++
+Kerberos authentication is supported with the additional definition of a JAAS file. The properties `java.security.auth.login.config` and `fusion.jaas.appname` are used to define the location of the JAAS file and the section of the file to use. These are described in more detail below.
++
+Native authentication uses a Fusion-defined username and password. This user must exist in Fusion, and have the proper permissions to index documents.
+
+`fusion.user`::
+The Fusion username or Kerberos principal to use for authentication to Fusion.
++
+If a Fusion username is used (`'fusion.realm' = 'NATIVE'`), the `fusion.password` must also be supplied.
+
+`fusion.pass`::
+This property is not shown in the example above. The password for the `fusion.user` when the `fusion.realm` is `NATIVE`.
+
+==== Indexing to a Kerberized Fusion Installation
+When Fusion is secured with Kerberos, Pig scripts must include the full path to a JAAS file that includes the service principal and the path to a keytab file that will be used to index the output of the script to Fusion.
+
+Additionally, a Kerberos ticket must be obtained on the server for the principal using `kinit`.
+
+`java.security.auth.login.config`::
+This property defines the path to a JAAS file that contains a service principal and keytab location for a user who is authorized to write to Fusion.
++
+The JAAS configuration file *must* be copied to the same path on every node where a Node Manager is running (i.e., every node where map/reduce tasks are executed). Here is a sample section of a JAAS file:
++
+[source]
+Client { --<1>
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  keyTab="/data/fusion-indexer.keytab" --<2>
+  storeKey=true
+  useTicketCache=true
+  debug=true
+  principal="fusion-indexer@FUSIONSERVER.COM"; --<3>
+};
++
+<1> The name of this section of the JAAS file. This name will be used with the `fusion.jaas.appname` parameter.
+<2> The location of the keytab file.
+<3> The service principal name. This should be a different principal than the one used for Fusion, but must have access to both Fusion and Pig. This name is used with the `fusion.user` parameter described above.
+
+`fusion.jaas.appname`::
+Used only when indexing to or reading from Fusion when it is secured with Kerberos.
++
+This property provides the name of the section in the JAAS file that includes the correct service principal and keytab path.
+
+// end::pig-fusion[]
+//end::use-pig[]
 
 // tag::example-pig[]
 === Sample CSV Script
@@ -184,7 +256,7 @@ The Solr collection to index into. In the script, we mapped this to the `solr.co
 ====
 The `zkhost` parameter above is only used if you are indexing to a SolrCloud cluster, which uses ZooKeeper to route indexing and query requests.
 
-If, however, you are not using SolrCloud, you can use the `solrUrl` parameter, which takes the location of a standalone Solr instance, in the form of `http://host:port/solr`.
+If, however, you are not using SolrCloud, you can use the `solrUrl` parameter, which takes the location of a standalone Solr instance, in the form of `\http://host:port/solr`.
 
 In the script, you would change the line that maps `solr.zkhost` to the `zkhost` property to map `solr.server.url` to the `solrUrl` property. For example:
 
