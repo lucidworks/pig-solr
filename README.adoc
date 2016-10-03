@@ -1,7 +1,7 @@
 :packageUser: solr
 :connectorVersion: 2.2.5
 
-= Lucidworks Pig Functions for Solr
+= Lucidworks Pig Functions for Solr and Fusion
 
 == Features
 
