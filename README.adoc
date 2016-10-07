@@ -262,7 +262,7 @@ In the script, you would change the line that maps `solr.zkhost` to the `zkhost`
 
    `set solr.server.url '$solrUrl';`
 ====
-// end::example[]
+// end::example-pig[]
 
 // tag::contribute[]
 == How to contribute
