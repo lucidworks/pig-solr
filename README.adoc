@@ -1,5 +1,5 @@
 :packageUser: solr
-:connectorVersion: 2.2.6
+:connectorVersion: 2.6.3
 
 = Lucidworks Pig Functions for Solr and Fusion
 
@@ -20,6 +20,8 @@ Supported versions are:
 // tag::pig-build[]
 == Build the Functions Jar
 
+WARNING: You must use Java 8 or higher to build the .jar.
+
 This project has a dependency on the `solr-hadoop-common` submodule (contained in a separate GitHub repository, https://github.com/lucidworks/solr-hadoop-common). This submodule must be initialized before building the Functions jar.
 
 To initialize the submodule, pull this repo, then:
@@ -36,7 +38,7 @@ To build the .jar file, run this command:
 
 This will make a .jar file:
 
-[listing, subs="attributes"]
+[source,subs="attributes"]
 solr-pig-functions/build/libs/{packageUser}-pig-functions-{connectorVersion}.jar
 
 The .jar is required to use the Pig functions.
@@ -161,6 +163,15 @@ These parameters can be made into variables in the script, with the proper value
 `fusion.endpoints`::
 The full URL to the index pipeline in Fusion. The URL should include the pipeline name and the collection data will be indexed to.
 
+`fusion.fail.on.error`::
+If `true`, when an error is encountered, such as if a row could not be parsed, indexing will stop. This is `false` by default.
+
+`fusion.buffer.timeoutms`::
+The amount of time, in milliseconds, to buffer documents before sending them to Fusion. The default is 1000. Documents will be sent to Fusion when either this value or `fusion.batchSize` is met.
+
+`fusion.batchSize`::
+The number of documents to batch before sending the batch to Fusion. The default is 500. Documents will be sent to Fusion when either this value or `fusion.buffer.timeoutms` is met.
+
 `fusion.realm`::
 This is used with `fusion.user` and `fusion.password` to authenticate to Fusion for indexing data. Two options are supported, `KERBEROS` or `NATIVE`.
 +
@@ -262,10 +273,10 @@ In the script, you would change the line that maps `solr.zkhost` to the `zkhost`
 
    `set solr.server.url '$solrUrl';`
 ====
-// end::example-pig[]
+// end::example[]
 
 // tag::contribute[]
-== How to contribute
+== How to Contribute
 
 . Fork this repo i.e. <username|organization>/hadoop-solr, following the http://help.github.com/fork-a-repo/[fork a repo] tutorial. Then, clone the forked repo on your local machine:
 +
