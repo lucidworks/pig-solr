@@ -30,6 +30,16 @@ To initialize the submodule, pull this repo, then:
 
 Once the submodule has been initialized, the command `git submodule update` will fetch all the data from that project and check out the appropriate commit listed in the superproject. You must initialize and update the submodule before attempting to build the Functions jar.
 
+* if a build is happening from a branch, please make sure that `solr-hadoop-common` is pointing to the correct SHA.
+(see https://github.com/blog/2104-working-with-submodules for more details)
+[source]
+----
+   pig-solr $ git checkout <branch-name>
+   pig-solr $ cd solr-hadoop-common
+   pig-solr/solr-hadoop-common $ git checkout <SHA>
+   pig-solr/solr-hadoop-common $ cd ..
+----
+
 The build uses Gradle. However, you do not need Gradle installed before attempting to build.
 
 To build the .jar file, run this command:
