@@ -39,10 +39,26 @@ subprojects {
       mavenCentral()
     }
 
+    project.configurations {
+      hadoop3Compile.extendsFrom(project.configurations.compile)
+      hadoop3TestCompile.extendsFrom(project.configurations.testCompile)
+      hadoop3TestRuntime.extendsFrom(project.configurations.testRuntime)
+      it."default".extendsFrom(project.configurations.hadoop3Compile)
+    }
+
+    compileJava {
+      classpath = configurations.hadoop3Compile
+    }
+
+    compileTestJava {
+      classpath = configurations.hadoop3TestCompile + sourceSets.main.output
+    }
+
     dependencies {
     }
 
     test {
+      classpath = configurations.hadoop3TestRuntime + sourceSets.main.output + sourceSets.test.output
       reports.html.destination = file("$buildDir/reports/tests")
       reports.junitXml.destination = file("$buildDir/test-results")
     }
@@ -85,18 +101,18 @@ project('solr-pig-core') {
     compile("org.apache.solr:solr-solrj:${solrVersion}") {
       exclude group: 'org.apache.hadoop'
     }
-    compile("org.apache.hadoop:hadoop-common:${hadoop2Version}@jar")
-    compile("org.apache.hadoop:hadoop-client:${hadoop2Version}") {
+    hadoop3Compile("org.apache.hadoop:hadoop-common:${hadoop3Version}@jar")
+    hadoop3Compile("org.apache.hadoop:hadoop-client:${hadoop3Version}") {
       exclude group: 'log4j'
       exclude group: 'org.slf4j'
     }
-    compile("org.apache.hadoop:hadoop-auth:${hadoop2Version}") {
+    hadoop3Compile("org.apache.hadoop:hadoop-auth:${hadoop3Version}") {
       transitive = false
     }
-    compile("org.apache.hadoop:hadoop-mapreduce-client-core:${hadoop2Version}") {
+    hadoop3Compile("org.apache.hadoop:hadoop-mapreduce-client-core:${hadoop3Version}") {
       transitive = false
     }
-    compile("org.apache.hadoop:hadoop-hdfs:${hadoop2Version}@jar") {
+    hadoop3Compile("org.apache.hadoop:hadoop-hdfs:${hadoop3Version}@jar") {
       transitive = false
     }
 
