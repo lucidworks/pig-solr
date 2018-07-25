@@ -121,7 +121,6 @@ project('solr-pig-core') {
     testCompile "commons-collections:commons-collections:3.2.2"
 
     testCompile "org.apache.solr:solr-test-framework:${solrVersion}"
-    testCompile "org.apache.mrunit:mrunit:1.0.0:hadoop2@jar"
 
     testCompile(project(':solr-hadoop-common:solr-hadoop-testbase'))
   }
