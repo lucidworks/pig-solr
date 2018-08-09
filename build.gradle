@@ -5,7 +5,7 @@ buildscript {
 }
 
 plugins {
-  id 'com.github.johnrengelman.shadow' version '1.2.4'
+  id 'com.github.johnrengelman.shadow' version '2.0.2'
 }
 
 ext {
@@ -41,6 +41,7 @@ subprojects {
 
     project.configurations {
       hadoop3Compile.extendsFrom(project.configurations.compile)
+      hadoop3Runtime.extendsFrom(project.configurations.runtime, hadoop3Compile)
       hadoop3TestCompile.extendsFrom(project.configurations.testCompile)
       hadoop3TestRuntime.extendsFrom(project.configurations.testRuntime)
       it."default".extendsFrom(project.configurations.hadoop3Compile)
@@ -86,7 +87,7 @@ subprojects {
 
 project('solr-pig-core') {
   dependencies {
-    compile(project(':solr-hadoop-common:solr-hadoop-io')) {
+    hadoop3Compile(project(':solr-hadoop-common:solr-hadoop-io')) {
       transitive = false
     }
     compile("org.apache.pig:pig:${pigVersion}") {
@@ -121,7 +122,6 @@ project('solr-pig-core') {
     testCompile "commons-collections:commons-collections:3.2.2"
 
     testCompile "org.apache.solr:solr-test-framework:${solrVersion}"
-    testCompile "org.apache.mrunit:mrunit:1.0.0:hadoop2@jar"
 
     testCompile(project(':solr-hadoop-common:solr-hadoop-testbase'))
   }
@@ -168,7 +168,7 @@ project('solr-pig-functions') {
   publishing {
     publications {
       shadow(MavenPublication) {
-        from components.shadow
+        project.shadow.component(it)
       }
     }
   }

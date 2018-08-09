@@ -2,3 +2,4 @@
 .idea/
 .gradle
 *.iml
+solr-pig-core/out
