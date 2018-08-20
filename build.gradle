@@ -135,6 +135,7 @@ project('solr-pig-functions') {
     zip64 true
     mergeServiceFiles()
     classifier = ''
+    configurations = [project.configurations.hadoop3Runtime]
     dependencies {
       exclude(dependency("org.apache.hadoop:.*"))
       exclude(dependency("org.apache.pig:.*"))
