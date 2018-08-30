@@ -1,21 +1,23 @@
 :packageUser: solr
-:connectorVersion: 2.6.3
+:connectorVersion: 4.0.0
+:toc:
 
 = Lucidworks Pig Functions for Solr and Fusion
 
+// tag::pig-features[]
 == Features
 
 * Functions to allow Pig scripts to index data to Solr or Fusion.
-* Fully SolrCloud compliant.
 * Supports Kerberos for authentication.
-* As of v2.2.4, integration with  http://lucidworks.com/fusion[Lucidworks Fusion] is supported, allowing use of Fusion pipelines for further data transformation prior to indexing.
+* As of v2.2.4, integration with  http://lucidworks.com/products[Lucidworks Fusion] is supported, allowing use of Fusion pipelines for further data transformation prior to indexing.
 
 Supported versions are:
 
 * Solr 5.x and higher
-* Pig versions 0.12, 0.13, 0.14, and 0.15
-* Hadoop 2.x
+* Pig versions 0.12 through 0.16
+* Hadoop 3.x
 * Fusion 2.4.x and higher
+// end::pig-features[]
 
 // tag::pig-build[]
 == Build the Functions Jar
@@ -228,7 +230,8 @@ Used only when indexing to or reading from Fusion when it is secured with Kerber
 This property provides the name of the section in the JAAS file that includes the correct service principal and keytab path.
 
 // end::pig-fusion[]
-//end::use-pig[]
+
+// end::use-pig[]
 
 // tag::example-pig[]
 === Sample CSV Script
@@ -283,7 +286,7 @@ In the script, you would change the line that maps `solr.zkhost` to the `zkhost`
 
    `set solr.server.url '$solrUrl';`
 ====
-// end::example[]
+// end::example-pig[]
 
 // tag::contribute[]
 == How to Contribute
